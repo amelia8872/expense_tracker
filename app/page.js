@@ -1,20 +1,53 @@
 'use client'
 
 import React, {useState, useEffect} from "react";
+import { collection, addDoc, getDoc, querySnapshot, query, onSnapshot } from "firebase/firestore";
+import { db } from "./firebase";
 
 import Image from "next/image";
 
 export default function Home() {
 
   const[items, setItems] = useState([
-    {name: 'Coffee', price: 3.50},
-    {name: 'Tea', price: 2.50},
-    {name: 'Milk', price: 2.00},
-    {name: 'Sugar', price: 1.00},
-    {name: 'Honey', price: 2.00},
+    // {name: 'Coffee', price: 3.50},
+    // {name: 'Tea', price: 2.50},
+    // {name: 'Milk', price: 2.00},
+    // {name: 'Sugar', price: 1.00},
+    // {name: 'Honey', price: 2.00},
   ]);
 
   const [total, setTotal] = useState(0);
+  const[newItem, setNewItem] = useState({name: '', price: ''});
+
+  // Add item to database
+  const addItem = async (e) => {
+    e.preventDefault();
+    if (newItem.name !== '' && newItem.price !== '') {
+      // setItems([...items, newItem]);
+      await addDoc(collection(db, "items"), {
+        name: newItem.name.trim(),
+        price: newItem.price,
+      });
+      setNewItem({name: '', price: ''});
+  }
+}
+
+  // Read items from database
+  useEffect(() => {
+    const q = query(collection(db, "items"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      let itemsArr = []
+
+      querySnapshot.forEach((doc) => {
+        itemsArr.push({...doc.data(), id: doc.id});
+      })
+
+      setItems(itemsArr);
+    })
+
+  }, []);
+
+  // Delete item in database
 
 
   return (
@@ -23,22 +56,29 @@ export default function Home() {
         <h1 className="text-4xl p-4 text-center">Express Tracker</h1>
         <div className="bg-slate-800 p-4 rounded-lg">
           <form className="grid grid-cols-6 items-center text-black">
-            <input className="col-span-3 p-3 border" type="text" placeholder="Enter Item" />
-            <input className="col-span-2 p-3 border mx-3" type="number" placeholder="Enter $" />
-            <button className="text-white bg-slate-950 hover:bg-slate-900 p-3 text-xl" type="submit">+</button>
+            <input value={newItem.name} onChange={(e) => setNewItem({...newItem, name: e.target.value})}className="col-span-3 p-3 border" type="text" placeholder="Enter Item" />
+            <input value={newItem.price} onChange={(e) => setNewItem({...newItem, price: e.target.value})}className="col-span-2 p-3 border mx-3" type="number" placeholder="Enter $" />
+            <button onClick={addItem} className="text-white bg-slate-950 hover:bg-slate-900 p-3 text-xl" type="submit">+</button>
           </form>
 
           <ul>
             {items.map((item, id) => (
-              <li key={id} className="my-4 w-full flex justify-between text-white">
+              <li key={id} className="my-4 w-full flex justify-between text-white bg-slate-950">
                 <div className="p-4 w-full flex justify-between">
                   <span className="capitalize">{item.name}</span>
                   <span>${item.price}</span>
                 </div>
-                <button>X</button>
+                <button className="ml-8 p-4 border-l-2 border-slate-900 hover:bg-slate-900 w-16">x</button>
               </li>
             ))}
           </ul>
+
+          {items.length < 1 ? ('') : (
+            <div className="flex justify-between p-3 text-white">
+              <span>Total</span>
+              <span>${total}</span>
+            </div>
+          )}
         </div>
       </div>
     </main>
