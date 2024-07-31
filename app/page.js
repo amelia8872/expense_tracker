@@ -1,14 +1,22 @@
-'use client'
+'use client';
 
-import React, {useState, useEffect} from "react";
-import { collection, addDoc, getDoc, querySnapshot, query, onSnapshot, deleteDoc, doc } from "firebase/firestore";
-import { db } from "./firebase";
+import React, { useState, useEffect } from 'react';
+import {
+  collection,
+  addDoc,
+  getDoc,
+  querySnapshot,
+  query,
+  onSnapshot,
+  deleteDoc,
+  doc,
+} from 'firebase/firestore';
+import { db } from './firebase';
 
-import Image from "next/image";
+import Image from 'next/image';
 
 export default function Home() {
-
-  const[items, setItems] = useState([
+  const [items, setItems] = useState([
     // {name: 'Coffee', price: 3.50},
     // {name: 'Tea', price: 2.50},
     // {name: 'Milk', price: 2.00},
@@ -17,51 +25,52 @@ export default function Home() {
   ]);
 
   const [total, setTotal] = useState(0);
-  const[newItem, setNewItem] = useState({name: '', price: ''});
+  const [newItem, setNewItem] = useState({ name: '', price: '' });
 
   // Add item to database
   const addItem = async (e) => {
     e.preventDefault();
     if (newItem.name !== '' && newItem.price !== '') {
       // setItems([...items, newItem]);
-      await addDoc(collection(db, "items"), {
+      await addDoc(collection(db, 'items'), {
         name: newItem.name.trim(),
         price: newItem.price,
       });
-      setNewItem({name: '', price: ''});
-  }
-}
+      setNewItem({ name: '', price: '' });
+    }
+  };
 
   // Read items from database
   useEffect(() => {
-    const q = query(collection(db, "items"));
+    const q = query(collection(db, 'items'));
     const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      let itemsArr = []
+      let itemsArr = [];
 
       querySnapshot.forEach((doc) => {
-        itemsArr.push({...doc.data(), id: doc.id});
-      })
+        itemsArr.push({ ...doc.data(), id: doc.id });
+      });
 
       setItems(itemsArr);
 
       // Read total from itemsArray
       const calculateTotal = () => {
-        const totalPrice = itemsArr.reduce((sum, item) => sum + parseFloat(item.price), 0);
+        const totalPrice = itemsArr.reduce(
+          (sum, item) => sum + parseFloat(item.price),
+          0
+        );
         setTotal(totalPrice);
-      }
+      };
 
       calculateTotal();
       return () => unsubscribe();
-    })
-
+    });
   }, []);
 
   // Delete item in database
 
-  const deleteItem = async(id) => {
+  const deleteItem = async (id) => {
     await deleteDoc(doc(db, 'items', id));
-  }
-
+  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between sm:p-24 p-4">
@@ -69,24 +78,54 @@ export default function Home() {
         <h1 className="text-4xl p-4 text-center">Express Tracker</h1>
         <div className="bg-slate-800 p-4 rounded-lg">
           <form className="grid grid-cols-6 items-center text-black">
-            <input value={newItem.name} onChange={(e) => setNewItem({...newItem, name: e.target.value})}className="col-span-3 p-3 border" type="text" placeholder="Enter Item" />
-            <input value={newItem.price} onChange={(e) => setNewItem({...newItem, price: e.target.value})}className="col-span-2 p-3 border mx-3" type="number" placeholder="Enter $" />
-            <button onClick={addItem} className="text-white bg-slate-950 hover:bg-slate-900 p-3 text-xl" type="submit">+</button>
+            <input
+              value={newItem.name}
+              onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+              className="col-span-3 p-3 border"
+              type="text"
+              placeholder="Enter Item"
+            />
+            <input
+              value={newItem.price}
+              onChange={(e) =>
+                setNewItem({ ...newItem, price: e.target.value })
+              }
+              className="col-span-2 p-3 border mx-3"
+              type="number"
+              placeholder="Enter $"
+            />
+            <button
+              onClick={addItem}
+              className="text-white bg-slate-950 hover:bg-slate-900 p-3 text-xl"
+              type="submit"
+            >
+              +
+            </button>
           </form>
 
           <ul>
             {items.map((item, id) => (
-              <li key={id} className="my-4 w-full flex justify-between text-white bg-slate-950">
+              <li
+                key={id}
+                className="my-4 w-full flex justify-between text-white bg-slate-950"
+              >
                 <div className="p-4 w-full flex justify-between">
                   <span className="capitalize">{item.name}</span>
                   <span>${item.price}</span>
                 </div>
-                <button onClick={() => deleteItem(item.id)} className="ml-8 p-4 border-l-2 border-slate-900 hover:bg-slate-900 w-16">x</button>
+                <button
+                  onClick={() => deleteItem(item.id)}
+                  className="ml-8 p-4 border-l-2 border-slate-900 hover:bg-slate-900 w-16"
+                >
+                  x
+                </button>
               </li>
             ))}
           </ul>
 
-          {items.length < 1 ? ('') : (
+          {items.length < 1 ? (
+            ''
+          ) : (
             <div className="flex justify-between p-3 text-white">
               <span>Total</span>
               <span>${total}</span>
